@@ -1,0 +1,171 @@
+package snippet;
+
+import java.io.*;
+import java.util.Scanner;
+
+/**
+ * Esta classe representa um aplicativo de doações de sangue onde realiza a leitura de um arquivo CSV.<p>
+ * Autor: Eduardo Cavassini Fries.
+ */
+
+
+public class DoacoesSangueApp {
+    /**
+     * O método principal do aplicativo.
+     *
+     * @param args Os argumentos da linha de comando (não são usados neste aplicativo).
+     */
+    public static void main(String[] args) {
+        String filePath = promptForFilePath();
+        boolean running = true;
+
+        while (running) {
+            int choice = displayMenuAndGetChoice();
+            switch (choice) {
+                case 1:
+                    readAndDisplayFileContent(filePath);
+                    break;
+                case 2:
+                    addDonationRecord(filePath);
+                    break;
+                case 3:
+                    deleteDonationRecord(filePath);
+                    break;
+                case 4:
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+            }
+        }
+    }
+
+    /**
+     * Solicita o caminho do arquivo CSV ao usuário.
+     *
+     * @return O caminho do arquivo CSV fornecido pelo usuário.
+     */
+    private static String promptForFilePath() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Informe o caminho do arquivo CSV: ");
+        return scanner.nextLine();
+    }
+
+    /**
+     * Apresenta o menu e obtém a escolha do usuário.
+     *
+     * @return A opção escolhida pelo usuário.
+     */
+    private static int displayMenuAndGetChoice() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Menu:");
+        System.out.println("1. Exibir registros do arquivo CSV");
+        System.out.println("2. Inserir nova doação");
+        System.out.println("3. Deletar registro por código");
+        System.out.println("4. Sair do programa");
+        System.out.print("Escolha uma opção: ");
+        return scanner.nextInt();
+    }
+
+    /**
+     * Lê e exibe o conteúdo do arquivo CSV.
+     *
+     * @param filePath O caminho do arquivo CSV.
+     */
+    private static void readAndDisplayFileContent(String filePath) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            System.out.println("Conteúdo do arquivo CSV:");
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao ler o arquivo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Adiciona um novo registro de doação ao arquivo CSV.
+     *
+     * @param filePath O caminho do arquivo CSV.
+     */
+    private static void addDonationRecord(String filePath) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Informe o código: ");
+        int codigo = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("Informe o nome: ");
+        String nome = scanner.nextLine();
+
+        System.out.print("Informe o CPF: ");
+        String cpf = scanner.nextLine();
+
+        System.out.print("Informe a data de nascimento: ");
+        String dataNascimento = scanner.nextLine();
+
+        System.out.print("Informe o tipo sanguíneo: ");
+        String tipoSanguineo = scanner.nextLine();
+
+        System.out.print("Informe os ml doados: ");
+        int mlDoados = scanner.nextInt();
+        scanner.nextLine();
+
+        String newRecord = codigo + "," + nome + "," + cpf + "," + dataNascimento + "," + tipoSanguineo + "," + mlDoados;
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
+            bw.write(newRecord);
+            bw.newLine(); // Adiciona uma quebra de linha após cada registro
+            System.out.println("Registro adicionado com sucesso.");
+        } catch (IOException e) {
+            System.err.println("Erro ao adicionar registro: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Exclui um registro de doação do arquivo CSV com base no código fornecido.
+     *
+     * @param filePath O caminho do arquivo CSV.
+     */
+    private static void deleteDonationRecord(String filePath) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Informe o código da doação a ser excluída: ");
+        int codeToDelete = scanner.nextInt();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(filePath + ".temp"))) {
+            String line;
+            boolean found = false;
+            while ((line = br.readLine()) != null) {
+                String[] fields = line.split(",");
+                int code = Integer.parseInt(fields[0].trim());
+                if (code == codeToDelete) {
+                    found = true;
+                } else {
+                    bw.write(line);
+                    bw.newLine();
+                }
+            }
+            if (!found) {
+                System.out.println("Registro com código " + codeToDelete + " não encontrado.");
+            } else {
+                System.out.println("Registro excluído com sucesso.");
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao excluir registro: " + e.getMessage());
+        }
+
+        File originalFile = new File(filePath);
+        File tempFile = new File(filePath + ".temp");
+        if (originalFile.delete()) {
+            if (tempFile.renameTo(originalFile)) {
+                tempFile.delete();
+                System.out.println("Arquivo renomeado com sucesso.");
+            } else {
+                System.err.println("Falha ao renomear o arquivo.");
+            }
+        } else {
+            System.err.println("Falha ao excluir o arquivo original.");
+        }
+    }
+}
